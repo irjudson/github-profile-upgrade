@@ -16,9 +16,13 @@ This package contains everything you need to create an outstanding GitHub profil
 
 | File | Description |
 |------|-------------|
+| **CLAUDE-PROMPTS.md** | 🤖 **NEW!** Ready-to-use Claude Code prompts for instant automated setup |
 | **github-profile-README.md** | Complete profile template with all modern features |
+| **EXAMPLE-NEW-GRAD.md** | 🎓 Example profile for new graduates (Gen Z style) |
+| **EXAMPLE-MID-CAREER.md** | 💼 Example profile for mid-career professionals (Millennial style) |
+| **EXAMPLE-LATE-CAREER.md** | 🎯 Example profile for executives/advisors (GenX/Boomer style) |
 | **SETUP-GUIDE.md** | Step-by-step setup and customization instructions |
-| **BADGE-REFERENCE.md** | 150+ technology badges ready to use |
+| **BADGE-REFERENCE.md** | 150+ technology badges ready to use (auto-updated monthly) |
 | **GITHUB-ACTIONS-GUIDE.md** | Automation workflows for dynamic content |
 | **README-START-HERE.md** | This file - your quick start guide |
 
@@ -28,16 +32,29 @@ This package contains everything you need to create an outstanding GitHub profil
 
 **Goal:** Get your profile live today. Perfect it later.
 
-### 1. Create Profile Repo (2 min)
+### 🤖 FASTEST: Use Claude Code (2 minutes!)
+
+**This repo + Claude Code = Instant professional profile!**
+
+Simply tell Claude:
+```
+"Help me set up my GitHub profile using the templates in this repo"
+```
+
+Claude will automate everything in minutes. **See [CLAUDE-PROMPTS.md](CLAUDE-PROMPTS.md) for ready-to-use prompts!**
+
+### Manual Setup (5 minutes)
+
+#### 1. Create Profile Repo (2 min)
 - GitHub → New repository → Name it **YOUR_USERNAME** (exact match)
 - Make it Public → Add README → Create
 
-### 2. Add Template (2 min)
+#### 2. Add Template (2 min)
 - Copy `github-profile-README.md`
 - Paste into your new README.md
 - Commit
 
-### 3. Customize Basics (1 min)
+#### 3. Customize Basics (1 min)
 Find & Replace these 3 things:
 - `YOUR_USERNAME` → yourusername
 - `YOUR_NAME` → Your Name

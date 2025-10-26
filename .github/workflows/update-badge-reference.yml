@@ -1,0 +1,221 @@
+name: Update Badge Reference
+
+on:
+  # Run on the first day of every month at 9 AM UTC
+  schedule:
+    - cron: '0 9 1 * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  check-and-update-badges:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Check badge URLs
+        id: check_badges
+        run: |
+          python3 << 'EOF'
+          import re
+          import requests
+          from datetime import datetime
+
+          print("🔍 Checking badge URLs in BADGE-REFERENCE.md...")
+
+          with open('BADGE-REFERENCE.md', 'r') as f:
+              content = f.read()
+
+          # Extract all badge URLs
+          badge_pattern = r'https://img\.shields\.io/badge/[^\)]+\)'
+          badges = re.findall(badge_pattern, content)
+
+          broken_badges = []
+          checked_count = 0
+
+          # Check a sample of badges (checking all 150+ would take too long)
+          for badge_url in badges[:30]:  # Check first 30 badges
+              badge_url = badge_url.rstrip(')')
+              try:
+                  response = requests.head(badge_url, timeout=5)
+                  if response.status_code != 200:
+                      broken_badges.append(badge_url)
+                  checked_count += 1
+              except Exception as e:
+                  broken_badges.append(f"{badge_url} (Error: {str(e)})")
+
+          print(f"✅ Checked {checked_count} badges")
+          print(f"❌ Found {len(broken_badges)} potential issues")
+
+          # Save results
+          with open('badge_check_results.txt', 'w') as f:
+              f.write(f"Badge Check Results - {datetime.now().strftime('%Y-%m-%d')}\n")
+              f.write(f"Checked: {checked_count} badges\n")
+              f.write(f"Issues found: {len(broken_badges)}\n\n")
+              if broken_badges:
+                  f.write("Broken/Problematic badges:\n")
+                  for badge in broken_badges:
+                      f.write(f"- {badge}\n")
+              else:
+                  f.write("All checked badges are working! ✅\n")
+          EOF
+
+      - name: Update last updated date
+        run: |
+          # Update the "Last Updated" date in BADGE-REFERENCE.md
+          TODAY=$(date +"%B %d, %Y")
+
+          # Add header if it doesn't exist
+          if ! grep -q "Last Updated:" BADGE-REFERENCE.md; then
+            # Add after the first heading
+            sed -i '0,/^# /s/$/\n\n**Last Updated:** '"$TODAY"'\n**Next Review:** First day of next month\n\n---/' BADGE-REFERENCE.md
+          else
+            # Update existing date
+            sed -i "s/\*\*Last Updated:\*\* .*/\*\*Last Updated:\*\* $TODAY/" BADGE-REFERENCE.md
+          fi
+
+          echo "Updated date to: $TODAY"
+
+      - name: Check for trending technologies
+        run: |
+          python3 << 'EOF'
+          import requests
+          from datetime import datetime
+
+          print("🔥 Checking for trending technologies...")
+
+          # List of technologies to check if they should be added
+          trending_techs = [
+              {"name": "Bun", "logo": "bun", "color": "000000"},
+              {"name": "Astro", "logo": "astro", "color": "FF5D01"},
+              {"name": "Svelte", "logo": "svelte", "color": "FF3E00"},
+              {"name": "Deno", "logo": "deno", "color": "000000"},
+              {"name": "Remix", "logo": "remix", "color": "000000"},
+              {"name": "Vite", "logo": "vite", "color": "646CFF"},
+              {"name": "Turbo", "logo": "turbo", "color": "EF4444"},
+              {"name": "Tauri", "logo": "tauri", "color": "FFC131"},
+          ]
+
+          with open('BADGE-REFERENCE.md', 'r') as f:
+              content = f.read()
+
+          missing_techs = []
+          for tech in trending_techs:
+              if tech['name'] not in content:
+                  badge_md = f"![{tech['name']}](https://img.shields.io/badge/{tech['name']}-{tech['color']}?style=for-the-badge&logo={tech['logo']}&logoColor=white)"
+                  missing_techs.append(f"- {tech['name']}: `{badge_md}`")
+
+          if missing_techs:
+              with open('trending_suggestions.txt', 'w') as f:
+                  f.write("Trending technologies not in BADGE-REFERENCE.md:\n\n")
+                  f.write('\n'.join(missing_techs))
+              print(f"Found {len(missing_techs)} trending technologies to consider adding")
+          else:
+              print("All trending technologies are already included!")
+          EOF
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update badge reference - monthly review'
+          title: '🎨 Monthly Badge Reference Update'
+          body: |
+            ## 📅 Monthly Badge Reference Review
+
+            This automated PR updates the badge reference for this month.
+
+            ### Changes Made:
+            - ✅ Updated "Last Updated" date
+            - ✅ Verified badge URLs (sample check)
+            - ✅ Checked for trending technologies
+
+            ### Review Checklist:
+            - [ ] Check badge_check_results.txt for any broken badges
+            - [ ] Review trending_suggestions.txt for technologies to add
+            - [ ] Add any new popular technologies from the past month
+            - [ ] Remove any deprecated technologies
+            - [ ] Update logo URLs if any have changed
+
+            ### Badge Check Results:
+            See `badge_check_results.txt` in this PR for details.
+
+            ### Trending Tech Suggestions:
+            See `trending_suggestions.txt` in this PR for suggestions.
+
+            ---
+
+            **Next Steps:**
+            1. Review the automated checks
+            2. Manually add any new badges for popular technologies
+            3. Test a few badges to ensure they render correctly
+            4. Merge when satisfied
+
+            🤖 Automated by GitHub Actions
+          branch: badge-reference-update-${{ github.run_number }}
+          delete-branch: true
+          labels: |
+            maintenance
+            badges
+            automated
+
+      - name: Create reminder issue if no PR needed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📅 Monthly Badge Reference Review - ${today}`,
+              body: `## Monthly Badge Reference Maintenance
+
+              It's time for the monthly review of BADGE-REFERENCE.md!
+
+              ### Tasks:
+              - [ ] Check for new trending technologies and frameworks
+              - [ ] Remove deprecated technologies
+              - [ ] Verify random sample of badge URLs still work
+              - [ ] Update any changed logo URLs
+              - [ ] Review issues/discussions for badge requests
+
+              ### Resources:
+              - [shields.io](https://shields.io) - Official badge generator
+              - [Simple Icons](https://simpleicons.org) - Logo names and colors
+              - [GitHub Trending](https://github.com/trending) - Popular repositories
+              - [Stack Overflow Trends](https://insights.stackoverflow.com/trends) - Technology trends
+
+              ### Quick Check:
+              Visit a few badges to ensure they still render:
+              - JavaScript badge: ![JS](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+              - Python badge: ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+              - React badge: ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+
+              Close this issue once the review is complete.
+
+              🤖 Automated reminder by GitHub Actions`,
+              labels: ['maintenance', 'badges', 'monthly-review']
+            });

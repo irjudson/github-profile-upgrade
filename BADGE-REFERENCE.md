@@ -4,6 +4,12 @@ A comprehensive collection of ready-to-use badges for your GitHub profile!
 
 All badges use the `for-the-badge` style for a modern, professional look.
 
+**Last Updated:** October 26, 2025
+**Next Review:** First day of next month
+🤖 **Auto-updated monthly** via GitHub Actions
+
+> **Note:** This is a curated subset of 150+ popular badges. For the complete collection, visit [shields.io](https://shields.io) or [markdown-badges](https://github.com/Ileriayo/markdown-badges).
+
 ---
 
 ## 📋 Table of Contents
