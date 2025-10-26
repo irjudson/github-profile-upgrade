@@ -1,0 +1,27 @@
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary Files
+*.tmp
+*.bak
+*.log
+
+# Personal Notes
+notes.txt
+TODO.txt
+personal/
+scratch/
+
+# User-specific tracking data (if someone clones and uses this)
+stats-log.csv
+baseline-metrics.md
+my-*.md
